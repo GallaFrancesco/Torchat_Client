@@ -164,7 +164,10 @@ def update_routine(cli):
             cli.send_file_info(resp['msg'])
         else:
             lock.acquire()
-            cli.print_line_cur ('[' + resp['date'] + '] ' + resp['msg'], 3) 
+            try:
+                cli.print_line_cur ('[' + resp['date'] + '] ' + resp['msg'], 3) 
+            except:
+                pass
             lock.release()
 
 def input_routine (cli):

@@ -7,7 +7,7 @@ from threading import Thread, Lock
 import threading
 
 from libtorchat import Torchat
-from ui-curses import ChatUI
+from cursesUI import ChatUI
 # many thanks to https://github.com/calzoneman/python-chatui.git
 # for this curses implementation of a chat UI
 
@@ -79,8 +79,9 @@ class Client:
         # global currId
         if line == '/exit':
         # this sends an exit to the client AND to the server
-            self.torchat.send_message(command='EXIT', line='', currentId="localhost", wait=False)
-            self.exitFlag = True
+            # self.torchat.send_message(command='EXIT', line='', currentId="localhost", wait=False)
+            # self.exitFlag = True
+            self.torchat.close_server()
             exit ()
         elif line == '/quit':
             # only the client exits here
@@ -100,7 +101,7 @@ class Client:
                 return
             self.filePath = data[1]
             self.fileName = data[2]
-            # upload files: start by requiring a random port to the peer
+            # upload files: start by requiring an handshake to the peer
             self.torchat.send_message(command='FILEALLOC', line=self.currId, currentId=self.currId, wait=False)
 
     def send_file_info (self, port):
@@ -197,7 +198,7 @@ def main (stdscr, portno):
 
     # initialize client
     cli = Client(ui, t)
-    
+
     # here we use one thread to update unread messages in background,
     # the foreground one gets the input
     # they both work on the same buffer (printBuf) and thus a

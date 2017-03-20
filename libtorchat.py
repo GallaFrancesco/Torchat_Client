@@ -32,11 +32,12 @@ class Torchat:
             s.send (bytes (json.dumps (j), 'utf-8'))
             if wait:
                 resp = json.loads (s.recv (5000).decode ('utf-8')) # a dictionary
+                return resp
         except:
             resp = dict()
             resp['cmd'] = "ERR"
             resp['msg'] = "The client was unable to send the message. Is the TORchat daemon running?"
-        return resp
+            return resp
 
     def get_peers(self):        # returns a list
         # ask for a list of peers with pending messages

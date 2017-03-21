@@ -89,7 +89,7 @@ class Client:
             exit()
         elif line == '/peer':
             # update peers list, possibly select a new one
-            self.peerList, i = get_peers(t, ui)
+            self.peerList, i = self.get_peers(t, ui)
             currId = self.peerList[i]
             self.ui.chatbuffer = []
             self.ui.linebuffer = []

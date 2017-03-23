@@ -80,7 +80,7 @@ class Client:
         if line == '/exit':
         # this sends an exit to the client AND to the server
             # self.torchat.send_message(command='EXIT', line='', currentId="localhost", wait=False)
-            # self.exitFlag = True
+            self.exitFlag = True
             self.torchat.close_server()
             exit ()
         elif line == '/quit':
@@ -101,8 +101,9 @@ class Client:
                 return
             self.filePath = data[1]
             self.fileName = data[2]
+            msg = self.filePath + " " + self.fileName + " " + self.currId
             # upload files: start by requiring an handshake to the peer
-            self.torchat.send_message(command='FILEALLOC', line=self.currId, currentId=self.currId, wait=False)
+            self.torchat.send_message(command='FILEALLOC', line=msg, currentId=self.currId, wait=False)
 
     def send_file_info (self, port):
         fileInfo = self.filePath + " " + self.fileName + " " + port + " " + self.currId
@@ -189,7 +190,7 @@ def input_routine (cli):
             # they start with "/"
             cli.elaborate_command(line)
 
-def main (stdscr, portno):
+def main (stdscr, serverHost, portno):
     global currId
 
     # initialize UI class
@@ -197,7 +198,7 @@ def main (stdscr, portno):
     ui = ChatUI(stdscr)
 
     # initialize Torchat class
-    t = Torchat('localhost', portno)
+    t = Torchat(serverHost, portno)
 
     # initialize client
     cli = Client(ui, t)
@@ -214,4 +215,4 @@ def main (stdscr, portno):
 # the ui init is then continued by the call to the ChatUi class (see main)
 if __name__ == '__main__':
     from sys import argv
-    wrapper(main, argv[1])
+    wrapper(main, argv[1], argv[2])

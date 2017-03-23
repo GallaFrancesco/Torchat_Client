@@ -161,8 +161,8 @@ def update_routine(cli):
         # the json is not printed if no messages are received
         if resp['cmd'] == 'END':
             sleep(0.5)
-        elif resp['cmd'] == 'FILEPORT':
-            cli.send_file_info(resp['msg'])
+        # elif resp['cmd'] == 'FILEPORT':
+            # cli.send_file_info(resp['msg'])
         else:
             lock.acquire()
             try:

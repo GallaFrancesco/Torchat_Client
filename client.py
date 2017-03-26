@@ -89,7 +89,7 @@ class Client:
             exit()
         elif line == '/peer':
             # update peers list, possibly select a new one
-            self.peerList, i = self.get_peers(t, ui)
+            self.peerList, i = self.get_peers()
             currId = self.peerList[i]
             self.ui.chatbuffer = []
             self.ui.linebuffer = []
@@ -113,36 +113,25 @@ class Client:
         # ask for a list of peers with pending messages
         peerList = self.torchat.get_peers()
         rightId = False
-        self.ui.userlist = list()
+        # self.ui.userlist = list()
 
         # this part is the peer list UI management
-        if peerList[0] == '': # no peers have written you!
+        if peerList[0] == '' and not self.ui.userlist: # no peers have written you, previous list is empty
             i = 0
             peerList[0] = self.ui.wait_input("Onion Address: ")
-            self.ui.userlist.append(peerList[0])
-            self.ui.redraw_userlist(i, self.torchat.onion)# this redraws only the user panel
+            if not peerList[0] in self.ui.userlist:
+                self.ui.userlist.append(peerList[0])
+            self.ui.redraw_userlist(i, self.torchat.onion) # this redraws only the user panel
             if self.currId != "":
                 self.ui.userlist.append(self.currId)
         else:
             for userid in peerList: # print them all with an integer id associated
-                self.ui.userlist.append(userid)
-            if not self.currId in peerList and self.currId != "":
-                self.ui.userlist.append(currId)
-                peerList.append(currId)
-            self.ui.redraw_userlist(None, self.torchat.onion) # this redraws only the user panel
-
-            # this avoids error crashing while selecting an ID
-            while not rightId: 
-                choice = self.ui.wait_input("Peer Id (a number): ")
-                try:
-                    i = int(choice) - 1
-                    if i >= len(peerList) or i < 0:
-                        rightId = False
-                    else:
-                        rightId = True
-                except:
-                    rightId = False
-            self.ui.redraw_userlist(i, self.torchat.onion) # this redraws only the user panel
+                if userid != "" and not userid in self.ui.userlist:
+                    self.ui.userlist.append(userid)
+            # if self.currId != "" and not self.currId in peerList:
+                # self.ui.userlist.append(self.currId)
+            i = self.ui.scroll_userlist(self.currId, self.torchat.onion)
+            peerList = self.ui.userlist
         return peerList, i
 
 def update_routine(cli):

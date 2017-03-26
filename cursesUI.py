@@ -69,6 +69,39 @@ class ChatUI:
         self.win_chatline.addstr(0, 0, self.inputbuffer[start:])
         self.win_chatline.refresh()
 
+    def scroll_userlist(self, curr, hostname):
+        # hide cursor, scroll by redrawing
+        curses.noecho()
+        curses.curs_set(0)
+        currentNum = self.userlist.index(curr) 
+        self.redraw_userlist(currentNum, hostname)
+        while True:
+            c = self.stdscr.getch()
+            if c == curses.KEY_ENTER or c == 10 or c == 13:
+                # enter selects peer
+                self.redraw_userlist(currentNum, hostname)
+                curses.curs_set(1)  
+                curses.echo()
+                return currentNum
+            elif c == curses.KEY_DOWN and currentNum < (len(self.userlist) - 1):
+                # key down and key up scroll the win_userlist
+                currentNum += 1
+                self.redraw_userlist(currentNum, hostname)
+            elif c == curses.KEY_UP and currentNum > 0:
+                currentNum -= 1
+                self.redraw_userlist(currentNum, hostname)
+            elif c == ord(' '):
+                # spacebar toggles stdin input of new peer
+                newPeer = self.wait_input("Onion Address: ")
+                if newPeer != "" and not newPeer in self.userlist:
+                    self.userlist.append(newPeer)
+                    currentNum = len(self.userlist) - 1
+                elif newPeer in self.userlist:
+                    currentNum = self.userlist.index(newPeer)
+                curses.curs_set(1)
+                curses.echo()
+                return currentNum
+
     def redraw_userlist(self, curr, hostname):
         """Redraw the userlist"""
         global host
@@ -82,8 +115,7 @@ class ChatUI:
             if i == curr:
                 self.win_userlist.addstr(i, 0, str(i+1) + '. ' + name[:w - 1], curses.color_pair(1) | curses.A_BOLD)
             else:
-                self.win_userlist.addstr(i, 0, str(i+1) + '. ' + name[:w - 1], curses.color_pair(4) | curses.A_BOLD)
-                
+                self.win_userlist.addstr(i, 0, str(i+1) + '. ' + name[:w - 1], curses.color_pair(4) | curses.A_BOLD) 
         # artList = onion.readlines()
         artList = onionAscii
         i = h - 21

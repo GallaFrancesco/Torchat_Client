@@ -1,4 +1,4 @@
-import json, socket
+import json,socket
 from time import strftime, localtime, ctime
 # this is used for async send/recv on socket
 from asyncore import dispatcher
@@ -31,7 +31,7 @@ class Torchat:
             s.connect ((self.host, int (self.port)))
             s.send (bytes (json.dumps (j), 'utf-8') + b'\r\n')
             if wait:
-                resp = json.loads (s.recv (5000).decode ('utf-8')) # a dictionary
+                resp = json.loads (s.recv (5000).decode ('utf-8').strip('\r\n')) # a dictionary
                 return resp
         except:
             resp = dict()

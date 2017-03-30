@@ -7,6 +7,7 @@ class Torchat:
     def __init__ (self, host, port):
         self.host = host
         self.port = port
+        self.open_socket() # used to communicate with the daemon
         self.onion = self.get_hostname()
 
     def create_json (self, cmd='', msg='', id='localhost', portno=None):
@@ -25,24 +26,55 @@ class Torchat:
             j['cmd'] = cmd
             return j
 
-    def send_to_mongoose (self, j, wait=False):
+    def open_socket(self):
+        # opens a socket, sets its timeout to 2 mins
         try:
-            s = socket.socket (socket.AF_INET, socket.SOCK_STREAM)
-            s.connect ((self.host, int (self.port)))
-            s.send (bytes (json.dumps (j), 'utf-8') + b'\r\n')
-            if wait:
-                resp = json.loads (s.recv (5000).decode ('utf-8').strip('\r\n')) # a dictionary
-                return resp
+            sock = socket.socket (socket.AF_INET, socket.SOCK_STREAM)
+            sock.connect ((self.host, int (self.port)))
+            sock.settimeout(120)
+            return sock
+        except ConnectionRefusedError:
+            print("Unable to connect to the daemon. Is it running? [ConnectionRefusedError]")
         except:
-            resp = dict()
-            resp['cmd'] = "ERR"
-            resp['msg'] = "The client was unable to send the message. Is the TORchat daemon running?"
+            pass
+
+    def format_message_length(self, buf):
+        strLen = str(len(buf))
+        if len(strLen) == 1:
+            retLen = strLen + '\0\0\0'
+        if len(strLen) == 2:
+            retLen = strLen + '\0\0'
+        elif len(strLen) == 3:
+            retLen = strLen + '\0'
+        # elif len(strLen) == 4:
+        else:   
+            retLen = strLen
+        return retLen
+
+    def send_to_daemon (self, j, wait=False):
+        # send to the TORchat daemon
+        # here we send, if unsuccessful, retry, and reset the connection if needed
+        # try:
+        lengthJson = self.format_message_length(json.dumps(j))
+        sock = self.open_socket()
+        sock.send (bytes (lengthJson, 'utf-8'))
+        sock.send (bytes(json.dumps(j), 'utf-8'))
+        if wait:
+            resp = json.loads (sock.recv (5000).decode ('utf-8').strip('\r\n')) # a dictionary
+            sock.close()
             return resp
+        else:
+            sock.close()
+        # except:
+            # resp = dict()
+            # resp['cmd'] = 'ERR'
+            # resp['msg'] = "The client couldn't send the message. [ConnectionResetError]"
+            # return resp
 
     def get_peers(self):        # returns a list
         # ask for a list of peers with pending messages
         j = self.create_json (cmd='GET_PEERS')
-        resp = self.send_to_mongoose (j, wait=True)
+        resp = self.send_to_daemon (j, wait=True)
         peerList = resp['msg'].split (',')
 
         return peerList
@@ -53,14 +85,14 @@ class Torchat:
 
     def close_server (self):
         j = self.create_json(cmd='EXIT', msg='')
-        self.send_to_mongoose(j, wait=True)
+        self.send_to_daemon(j, wait=True)
 
     def send_message (self, command, line, currentId, sendPort="", wait=False): # added cmd for fileup needs
         # portno is the one used by the other server, usually 80
         if sendPort == "":
             sendPort = self.port
         j = self.create_json(cmd=command, msg=line, id=currentId, portno = sendPort)
-        return self.send_to_mongoose(j, wait)
+        return self.send_to_daemon(j, wait)
 
     def check_error (self, j):
         if j['cmd'] == 'ERR':
@@ -74,7 +106,7 @@ class Torchat:
         msgs = list ()
         while True:
             j = self.create_json (cmd='UPDATE', msg=currId)
-            resp = self.send_to_mongoose (j, wait=True)
+            resp = self.send_to_daemon (j, wait=True)
             if resp['cmd'] == 'END':
                 if msgs:
                     return msgs
@@ -85,7 +117,7 @@ class Torchat:
 
     def check_new_messages_single (self, currId):
         j = self.create_json (cmd='UPDATE', msg=currId)
-        resp = self.send_to_mongoose (j, wait=True)
+        resp = self.send_to_daemon (j, wait=True)
         if resp['cmd'] == 'END':
                 return None
         else:

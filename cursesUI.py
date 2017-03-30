@@ -29,6 +29,23 @@ class ChatUI:
 
         self.redraw_ui(None)
 
+    def addstr_safe(self, win, y, x, buf, flags=0):
+        if win == 'u':
+            try:
+                self.win_userlist.addstr(y, x, buf, flags)
+            except:
+                pass
+        elif win == 'c':
+            try:
+                self.win_chatbuffer.addstr(y, x, buf, flags)
+            except:
+                pass
+        elif win == 'i':
+            try:
+                self.win_chatline.addstr(y, x, buf, flags)
+            except:
+                pass
+
     def resize(self):
         """Handles a change in terminal size"""
         u_h, u_w = self.win_userlist.getmaxyx()
@@ -66,14 +83,17 @@ class ChatUI:
         start = len(self.inputbuffer) - w + 1
         if start < 0:
             start = 0
-        self.win_chatline.addstr(0, 0, self.inputbuffer[start:])
+        self.addstr_safe('i',0, 0, self.inputbuffer[start:])
         self.win_chatline.refresh()
 
     def scroll_userlist(self, curr, hostname):
         # hide cursor, scroll by redrawing
         curses.noecho()
         curses.curs_set(0)
-        currentNum = self.userlist.index(curr) 
+        if curr and curr != "":
+            currentNum = self.userlist.index(curr) 
+        else:
+            currentNum = 0
         self.redraw_userlist(currentNum, hostname)
         while True:
             c = self.stdscr.getch()
@@ -113,18 +133,18 @@ class ChatUI:
                 break
             #name = name.ljust(w - 1) + "|"
             if i == curr:
-                self.win_userlist.addstr(i, 0, str(i+1) + '. ' + name[:w - 1], curses.color_pair(1) | curses.A_BOLD)
+                self.addstr_safe('u',i, 0, str(i+1) + '. ' + name[:w - 1], curses.color_pair(1) | curses.A_BOLD)
             else:
-                self.win_userlist.addstr(i, 0, str(i+1) + '. ' + name[:w - 1], curses.color_pair(4) | curses.A_BOLD) 
+                self.addstr_safe('u',i, 0, str(i+1) + '. ' + name[:w - 1], curses.color_pair(4) | curses.A_BOLD) 
         # artList = onion.readlines()
         artList = onionAscii
         i = h - 21
         for line in artList:
-            self.win_userlist.addstr(i, 0, line , curses.color_pair(4) | curses.A_BOLD)
+            self.addstr_safe('u',i, 0, line , curses.color_pair(4) | curses.A_BOLD)
             i += 1
         # onion.close()
-        self.win_userlist.addstr(i+1, int(w/2) - 8, "TORchat Address:" , curses.color_pair(4) | curses.A_BOLD)
-        self.win_userlist.addstr(i+2, 3, hostname , curses.color_pair(4) | curses.A_BOLD)
+        self.addstr_safe('u', i+1, int(w/2) - 8, "TORchat Address:" , curses.color_pair(4) | curses.A_BOLD)
+        self.addstr_safe('u', i+2, 3, hostname , curses.color_pair(4) | curses.A_BOLD)
         self.win_userlist.refresh()
 
 
@@ -136,7 +156,7 @@ class ChatUI:
         if j < 0:
             j = 0
         for i in range(min(h, len(self.linebuffer))):
-            self.win_chatbuffer.addstr(i, 1, self.linebuffer[j], curses.color_pair(color))
+            self.addstr_safe('c', i, 1, self.linebuffer[j], curses.color_pair(color))
             j += 1
         self.win_chatbuffer.refresh()
 

@@ -7,7 +7,7 @@ class Torchat:
     def __init__ (self, host, port):
         self.host = host
         self.port = port
-        self.open_socket() # used to communicate with the daemon
+        # self.open_socket() # used to communicate with the daemon
         self.onion = self.get_hostname()
 
     def create_json (self, cmd='', msg='', id='localhost', portno=None):
@@ -49,6 +49,9 @@ class Torchat:
         # elif len(strLen) == 4:
         else:   
             retLen = strLen
+        with open("line.txt", 'wb') as fp:
+            fp.write(retLen.encode('utf-8'))
+            fp.write(str(len(retLen)).encode('utf-8'))
         return retLen
 
     def send_to_daemon (self, j, wait=False):

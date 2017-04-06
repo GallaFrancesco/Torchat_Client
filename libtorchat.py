@@ -1,5 +1,5 @@
 import json,socket
-from time import strftime, localtime, ctime
+from time import strftime, localtime, ctime, sleep
 # this is used for async send/recv on socket
 from asyncore import dispatcher
 
@@ -41,11 +41,11 @@ class Torchat:
     def format_message_length(self, buf):
         strLen = str(len(buf))
         if len(strLen) == 1:
-            retLen = strLen + '\0\0\0'
+            retLen = '000'+ strLen
         if len(strLen) == 2:
-            retLen = strLen + '\0\0'
+            retLen = '00' + strLen
         elif len(strLen) == 3:
-            retLen = strLen + '\0'
+            retLen = '0' + strLen
         # elif len(strLen) == 4:
         else:   
             retLen = strLen
@@ -60,11 +60,14 @@ class Torchat:
         # try:
         lengthJson = self.format_message_length(json.dumps(j))
         sock = self.open_socket()
-        sock.send (bytes (lengthJson, 'utf-8'))
-        sock.send (bytes(json.dumps(j), 'utf-8'))
+        msg = bytes (lengthJson, 'utf-8') + bytes(json.dumps(j), 'utf-8')
+        sock.send (msg)
         if wait:
-            resp = json.loads (sock.recv (5000).decode ('utf-8').strip('\r\n')) # a dictionary
-            sock.close()
+            recvSt = sock.recv (5000).decode ('utf-8')
+            with open("line.txt", 'w') as fp:
+                fp.write(recvSt)
+                sock.close()
+            resp = json.loads (recvSt[4:]) # a dictionary; skip first 4 chars that are the dimensionhead
             return resp
         else:
             sock.close()
@@ -78,9 +81,11 @@ class Torchat:
         # ask for a list of peers with pending messages
         j = self.create_json (cmd='GET_PEERS')
         resp = self.send_to_daemon (j, wait=True)
-        peerList = resp['msg'].split (',')
-
-        return peerList
+        if resp != None:
+            peerList = resp['msg'].split (',')
+            return peerList
+        else:
+            return None
 
     def get_hostname(self):
         resp = self.send_message(command="HOST", line="", currentId="localhost", wait=True)

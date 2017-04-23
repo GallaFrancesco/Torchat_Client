@@ -95,7 +95,7 @@ class Torchat:
 
     def close_server (self):
         j = self.create_json(cmd='EXIT', msg='')
-        self.send_to_daemon(j, wait=True)
+        self.send_to_daemon(j, wait=False)
 
     def send_message (self, command, line, currentId, sendPort="", wait=False): # added cmd for fileup needs
         # portno is the one used by the other server, usually 80

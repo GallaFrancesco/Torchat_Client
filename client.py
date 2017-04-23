@@ -11,7 +11,6 @@ from cursesUI import ChatUI
 # many thanks to https://github.com/calzoneman/python-chatui.git
 # for this curses implementation of a chat UI
 
-lock = Lock() # a binary semaphore
 
 class Completer(object):
     # this is a completer that works on the input buffer
@@ -138,14 +137,11 @@ def update_routine(cli):
     # this function queries the server for unread messages
     # it runs until no messages from the given peer are left
     # then waits half a second and queries again
-    global lock
     while True:
         if cli.exitFlag:
             cli.ui.close_ui()
             exit()
         resp = cli.torchat.send_message (command="UPDATE", line=cli.currId, currentId="localhost", sendPort=8000, wait=True)
-        # with open("tmp", 'a') as fp:
-            # fp.write(resp['cmd']+' '+resp['msg']+'\n'+resp['date'])
             # fp.write('\n')
         # the json is not printed if no messages are received
         if resp['cmd'] == 'END':
@@ -153,12 +149,10 @@ def update_routine(cli):
         # elif resp['cmd'] == 'FILEPORT':
             # cli.send_file_info(resp['msg'])
         else:
-            lock.acquire()
             try:
                 cli.print_line_cur ('[' + resp['date'] + '] ' + resp['msg'], 3) 
             except:
                 pass
-            lock.release()
 
 def input_routine (cli):
     # processes the input buffer each return
@@ -191,7 +185,6 @@ def main (stdscr, serverHost, portno):
 
     # initialize client
     cli = Client(ui, t)
-
     # here we use one thread to update unread messages in background,
     # the foreground one gets the input
     # they both work on the same buffer (printBuf) and thus a

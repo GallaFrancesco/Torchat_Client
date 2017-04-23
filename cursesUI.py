@@ -95,12 +95,13 @@ class ChatUI:
         else:
             currentNum = 0
         self.redraw_userlist(currentNum, hostname)
+        self.wait_input("Press ENTER to select peers, ARROWS to scroll between them, and SPACE to enter a new onion address. ENTER to continue.")
         while True:
             c = self.stdscr.getch()
             if c == curses.KEY_ENTER or c == 10 or c == 13:
                 # enter selects peer
                 self.redraw_userlist(currentNum, hostname)
-                curses.curs_set(1)  
+                curses.curs_set(1)
                 curses.echo()
                 return currentNum
             elif c == curses.KEY_DOWN and currentNum < (len(self.userlist) - 1):

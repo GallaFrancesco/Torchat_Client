@@ -80,7 +80,9 @@ class Torchat:
     def get_peers(self):        # returns a list
         # ask for a list of peers with pending messages
         j = self.create_json (cmd='GET_PEERS')
-        resp = self.send_to_daemon (j, wait=True)
+        resp = self.send_to_daemon (j, wait=True) 
+        with open("tmp", 'w') as fp:
+            fp.write('ciao')
         if resp != None:
             peerList = resp['msg'].split (',')
             return peerList

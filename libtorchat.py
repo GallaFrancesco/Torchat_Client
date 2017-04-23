@@ -7,7 +7,6 @@ class Torchat:
     def __init__ (self, host, port):
         self.host = host
         self.port = port
-        # self.open_socket() # used to communicate with the daemon
         self.onion = self.get_hostname()
 
     def create_json (self, cmd='', msg='', id='localhost', portno=None):
@@ -35,8 +34,7 @@ class Torchat:
             return sock
         except ConnectionRefusedError:
             print("Unable to connect to the daemon. Is it running? [ConnectionRefusedError]")
-        except:
-            pass
+            exit()
 
     def format_message_length(self, buf):
         strLen = str(len(buf))
@@ -47,7 +45,7 @@ class Torchat:
         elif len(strLen) == 3:
             retLen = '0' + strLen
         # elif len(strLen) == 4:
-        else:   
+        else:
             retLen = strLen
         with open("line.txt", 'wb') as fp:
             fp.write(retLen.encode('utf-8'))
@@ -60,32 +58,33 @@ class Torchat:
         # try:
         lengthJson = self.format_message_length(json.dumps(j))
         sock = self.open_socket()
-        msg = bytes (lengthJson, 'utf-8') + bytes(json.dumps(j), 'utf-8')
-        sock.send (msg)
-        if wait:
-            recvSt = sock.recv (5000).decode ('utf-8')
-            with open("line.txt", 'w') as fp:
-                fp.write(recvSt)
-                sock.close()
-            resp = json.loads (recvSt[4:]) # a dictionary; skip first 4 chars that are the dimensionhead
+        if not sock:
+            resp = dict()
+            resp['cmd'] = "ERR"
+            resp['msg'] = "[ConnectionRefusedError] Is the daemon running?"
             return resp
         else:
-            sock.close()
-        # except:
-            # resp = dict()
-            # resp['cmd'] = 'ERR'
-            # resp['msg'] = "The client couldn't send the message. [ConnectionResetError]"
-            # return resp
+            msg = bytes (lengthJson, 'utf-8') + bytes(json.dumps(j), 'utf-8')
+            sock.send (msg)
+            if wait:
+                recvSt = sock.recv (5000).decode ('utf-8')
+                with open("line.txt", 'w') as fp:
+                    fp.write(recvSt)
+                    sock.close()
+                resp = json.loads (recvSt[4:]) # a dictionary; skip first 4 chars that are the dimensionhead
+                return resp
+            else:
+                sock.close()
 
     def get_peers(self):        # returns a list
         # ask for a list of peers with pending messages
         j = self.create_json (cmd='GET_PEERS')
         resp = self.send_to_daemon (j, wait=True) 
-        with open("tmp", 'w') as fp:
-            fp.write('ciao')
         if resp != None:
             peerList = resp['msg'].split (',')
             return peerList
+        elif resp['cmd'] == "ERR":
+            return ['ERR', resp['msg']]
         else:
             return None
 

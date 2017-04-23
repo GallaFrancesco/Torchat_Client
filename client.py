@@ -111,8 +111,11 @@ class Client:
     def get_peers(self):
         # ask for a list of peers with pending messages
         peerList = self.torchat.get_peers()
+        if peerList[0] == "ERR":
+            self.ui.chatbuffer_add(peerList[1])
+            self.exitFlag = True
+            exit()
         rightId = False
-        # self.ui.userlist = list()
 
         # this part is the peer list UI management
         if peerList[0] == '' and not self.ui.userlist: # no peers have written you, previous list is empty
@@ -173,15 +176,12 @@ def input_routine (cli):
             # they start with "/"
             cli.elaborate_command(line)
 
-def main (stdscr, serverHost, portno):
+def main (stdscr, t):
     global currId
 
     # initialize UI class
     stdscr.clear()
     ui = ChatUI(stdscr)
-
-    # initialize Torchat class
-    t = Torchat(serverHost, portno)
 
     # initialize client
     cli = Client(ui, t)
@@ -197,4 +197,7 @@ def main (stdscr, serverHost, portno):
 # the ui init is then continued by the call to the ChatUi class (see main)
 if __name__ == '__main__':
     from sys import argv
-    wrapper(main, argv[1], argv[2])
+    # here since it must check connection before starting the curses wrapper
+    # initialize Torchat class
+    t = Torchat(argv[1], argv[2])
+    wrapper(main, t)

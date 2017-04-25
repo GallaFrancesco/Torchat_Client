@@ -7,9 +7,9 @@ A client for [TORchat](https://github.com/FraMecca/torchat) written in Python3 a
 To run, start the daemon (see the TORchat readme) and then:
 
 ```
-python3 client.py 8000
+python3 client.py localhost 8000
 ```
-*localhost can be replaced with any other host on which the TORchat daemon is running.*
+*localhost can be replaced with any other host on which the TORchat daemon is running, 8000 is the standard port on which the TORchat daemon listens*
 
 It will ask for a peer (an onion address) to connect with, and then it will support the following actions:
  * To write a message to the peer selected, simply write and press enter;
